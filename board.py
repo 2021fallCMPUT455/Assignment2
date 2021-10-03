@@ -43,6 +43,19 @@ class and_or_tree:
                 latest_or_node.right = current_node
                 self.latest_or_node = current_node
 
+    def find_and_node(self, board, color):
+        opponent = WHITE + BLACK - color
+        opponent_stone_list = [point for point in where1d(self.board == opponent)]
+        dead_end_node_list = []
+        for point in opponent_stone_list:
+            for neighbor in board.neighbors_of_color(point, EMPTY):
+                board[neighbor] = opponent
+                detection_result = board.detect_potential_win(neighbor)
+                if type(detection_result) == dict:
+                    #There is no five-in-a-row-detected
+                    pass
+                elif detection_result == -100:
+
     def find_best_move(self, board):
         pass
 
@@ -463,9 +476,9 @@ class GoBoard(object):
         if x_counter >= 5:
             #print('hor')
             print(str(color))
-            return True
+            return -1
         else:
-            return found_straight_line
+            return x_counter
 
     def detect_straight_line_hor(self, point, color):
         found_straight_line = False
@@ -486,9 +499,9 @@ class GoBoard(object):
             y_counter += 1
         if y_counter >= 5:
             #print('ver')
-            return True
+            return -1
         else:
-            return found_straight_line
+            return y_counter
 
     def detect_straight_line_left_diag(self, point, color):
         #print(f'\n check 00: {self.board(self.size + 1, self.size + 1)} \n')
@@ -523,9 +536,9 @@ class GoBoard(object):
         #print('end')
         if counter >= 5:
             #print('right')
-            return True
+            return -1
         else:
-            return False
+            return counter
 
     def detect_straight_line_right_diag(self, point, color):
         y = point % self.NS
@@ -547,9 +560,9 @@ class GoBoard(object):
 
         if counter >= 5:
             #print('left')
-            return True
+            return -1
         else:
-            return False
+            return counter
 
     def working_on_detection(self, stone_list):
 
@@ -559,17 +572,17 @@ class GoBoard(object):
             total_stone = (self.board == BLACK).sum() + (self.board
                                                          == WHITE).sum()
             if total_stone >= 5 and len(neighbors_color) != 0:
-                if self.detect_straight_line_hor(point, color) == True:
+                if self.detect_straight_line_hor(point, color) == -1:
 
                     return True
-                elif self.detect_straight_line_ver(point, color) == True:
+                elif self.detect_straight_line_ver(point, color) == -1:
 
                     return True
-                elif self.detect_straight_line_left_diag(point, color) == True:
+                elif self.detect_straight_line_left_diag(point, color) == -1:
 
                     return True
                 elif self.detect_straight_line_right_diag(point,
-                                                          color) == True:
+                                                          color) == -1:
 
                     return True
 
@@ -651,3 +664,38 @@ class GoBoard(object):
         legal_move.sort(key=lambda x: x[0])
         legal_move = ' '.join([move for move in legal_move])
         return legal_move
+
+        def detect_potential_win(self, point):
+            #stone number in the row, stone location
+            best_move = {'1':[], '2':[], '3':[], '4':[]}
+            
+            color = self.get_color(point)
+            neighbors_color = self.gomoku_neighbors_of_color(point, color)
+            total_stone = (self.board == BLACK).sum() + (self.board
+                                                            == WHITE).sum()
+            if total_stone >= 5 and len(neighbors_color) != 0:
+                hor_detection_result = self.detect_straight_line_hor(point, color)
+                if hor_detection_result == -1:
+
+                    return -100
+                else:
+                    best_move[str(hor_detection_result)].append(point)
+                ver_detection_result = self.detect_straight_line_ver(point, color)
+                if self.detect_straight_line_ver(point, color) == -1:
+
+                    return -100
+                else:
+                    best_move[str(ver_detection_result)].append(point)
+                left_diag_result = self.detect_straight_line_left_diag(point, color)
+                if  left_diag_result == -1:
+
+                    return -100
+                else:
+                    best_move[str( left_diag_result)].append(point)
+                right_diag_result = self.detect_straight_line_right_diag(point, color)
+                if right_diag_result == -1:
+
+                    return -100
+                else:
+                    best_move[str(right_diag_result)].append(point)
+            return best_move
