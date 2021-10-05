@@ -26,13 +26,18 @@ See GoBoardUtil.coord_to_point for explanations of the array encoding.
 
 class and_or_tree:
     #def __init__(self, point, board):
-    def __init__(self, board):
+    def __init__(self, board, depth = 5):
         #self.root = point
         self.board= board
         #self.root_color = self.board.get_color(self.root)
         #self.point_neighbors = self.board.get_neighbors(self.root)
         #self.or_node_layer = []
         #self.and_node_layer = []
+        self.depth = depth
+        self.current_depth = 0
+        self.best_move_for_now = {}
+        for i in range(self.depth):
+            self.best_move_for_now[i + 1] = []
     '''
     def find_or_node(self):
         latest_or_node = None
@@ -91,35 +96,52 @@ class and_or_tree:
         current_move = None
         color_point = [point for point in where1d(self.board == color)]
         EMPTY_list = []
-        for point in color_point:
-            EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
+        if len(color_point) == 0:
+            EMPTY_list = EMPTY_list + where1d(self.board == EMPTY)
+        else:
+            for point in color_point:
+                EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
         if self.board.detect_five_in_a_row == color:
             return current_move
-        for location in EMPTY_list:
-            self.board[location] = color
-            is_win = minimax_and(opponent)
-            self.board[location] = EMPTY
-            if is_win:
-                current_move = location
-                return True
-        return False
+        if len(EMPTY_list) == 0:
+            # This is a draw situation
+            return 0
+        self.current_depth += 1
+        if self.current_depth <= self.depth:
+            for location in EMPTY_list:
+                self.best_move_for_now[current_depth].append(location)
+                self.board[location] = color
+                is_win = minimax_and(opponent)
+                self.board[location] = EMPTY
+                if is_win > 0:
+                    current_move = location
+                    return current_move
+        return -1
 
     def minimax_and(self, color):
         opponent = WHITE + BLACK - color
         current_move = None
         color_point = [point for point in where1d(self.board == color)]
         EMPTY_list = []
-        for point in color_point:
-            EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
+        if len(color_point) == 0:
+            EMPTY_list = EMPTY_list + where1d(self.board == EMPTY)
+        else:
+            for point in color_point:
+                EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
         if self.board.detect_five_in_a_row == color:
             return current_move
-        for location in EMPTY_list:
-            self.board[location] = color
-            is_loss = not minimax_or(opponent)
-            self.board[location] = EMPTY
-            if is_loss:
-                return False
-        return True
+        if len(EMPTY_list) == 0:
+            # This is a draw situation
+            return 0
+        self.current_depth += 1
+        if self.current_depth <= self.depth:
+            for location in EMPTY_list:
+                self.board[location] = color
+                is_loss = -1 * minimax_or(opponent)
+                self.board[location] = EMPTY
+                if is_loss < 0:
+                    return -1
+        return current_move
 '''
 class terminate_node:
     def __init__(self, value):
@@ -776,4 +798,15 @@ class GoBoard(object):
     
     def solve_current_state(self, color):
         tree = and_or_tree(self.board)
-        tree.minimax_or(color)
+        location = tree.minimax_or(color)
+        if location > 0:
+            # The location is a winning move
+            return location
+        elif location == 0:
+            # This is a draw or the program reachs the time limit.
+            return tree.best_move_for_now
+        elif location < 0:
+            # There is no wining move for player right now.
+            return tree.best_move_for_now
+
+
