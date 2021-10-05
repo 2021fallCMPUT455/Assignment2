@@ -25,41 +25,102 @@ See GoBoardUtil.coord_to_point for explanations of the array encoding.
 
 
 class and_or_tree:
-    def __init__(self, point, board):
-        self.root = point
-        self.root_color = board.get_color(self.root)
-        self.or_node_layer = []
-        self.and_node_layer = []
-
+    #def __init__(self, point, board):
+    def __init__(self, board):
+        #self.root = point
+        self.board= board
+        #self.root_color = self.board.get_color(self.root)
+        #self.point_neighbors = self.board.get_neighbors(self.root)
+        #self.or_node_layer = []
+        #self.and_node_layer = []
+    '''
     def find_or_node(self):
         latest_or_node = None
-        for node in board.neighbors_of_color(self.root, self.root_color):
+        for node in self.point_neighbors:
             if self.get_color(node) == EMPTY:
                 if first_or_node == None:
                     latest_or_node = or_node(left=None, right=None, value=node)
-                current_node = self.or_node(left=latest_or_node,
+                current_node = or_node(left=latest_or_node,
                                             right=None,
                                             value=node)
                 latest_or_node.right = current_node
-                self.latest_or_node = current_node
-
-    def find_and_node(self, board, color):
-        opponent = WHITE + BLACK - color
-        opponent_stone_list = [point for point in where1d(self.board == opponent)]
-        dead_end_node_list = []
+                latest_or_node = current_node
+        self.board[latest_or_node] = self.root_color
+        if self.board.detect_five_in_a_row != EMPTY:
+            return latest_or_node
+        else:
+            is_win = find_and_node()
+            if not is_win():
+            self.board[latest_or_node] = EMPTY
+            latest_or_node = latest_or_node.left
+            return False
+    def find_and_node(self):
+        #Return false when opponent 
+        opponent = WHITE + BLACK - self.root_color
+        opponent_stone_list = [point for point in where1d(board == opponent)]
+        latest_and_node = None
         for point in opponent_stone_list:
-            for neighbor in board.neighbors_of_color(point, EMPTY):
-                board[neighbor] = opponent
-                detection_result = board.detect_potential_win(neighbor)
-                if type(detection_result) == dict:
+            for neighbor in self.board.neighbors_of_color(point, EMPTY):
+                if latest_and_node == None:
+                    latest_and_node = or_node(left=None, right=None, value=neighbor)
+                current_node = or_node(left=latest_and_node, right=None, value=neighbor)
+                latest_and_node.right = current_node
+                latest_and_node = current_node
+                self.board[latest_and_node.value] = opponent
+                detection_result = self.board.detect_potential_win(latest_and_node.value)
+                #
+                #
+                #
+                #
+                #self.board[neighbor] = opponent
+                #detection_result = self.board.detect_potential_win(neighbor)
+        if type(detection_result) == dict:
                     #There is no five-in-a-row-detected
-                    pass
-                elif detection_result == -100:
-
+            is_win = find_or_node()
+        elif detection_result == -100:
+                    #The opponent is going to win. The current state is not a winning state for the current_player.
+            
+            return latest_and_node
+        return True
     def find_best_move(self, board):
-        pass
+        if 
+    '''
 
+    def minimax_or(self, color):
+        opponent = WHITE + BLACK - color
+        current_move = None
+        color_point = [point for point in where1d(self.board == color)]
+        EMPTY_list = []
+        for point in color_point:
+            EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
+        if self.board.detect_five_in_a_row == color:
+            return current_move
+        for location in EMPTY_list:
+            self.board[location] = color
+            is_win = minimax_and(opponent)
+            self.board[location] = EMPTY
+            if is_win:
+                current_move = location
+                return True
+        return False
 
+    def minimax_and(self, color):
+        opponent = WHITE + BLACK - color
+        current_move = None
+        color_point = [point for point in where1d(self.board == color)]
+        EMPTY_list = []
+        for point in color_point:
+            EMPTY_list = EMPTY_list + self.board.neighbor_of_color(point, EMPTY)
+        if self.board.detect_five_in_a_row == color:
+            return current_move
+        for location in EMPTY_list:
+            self.board[location] = color
+            is_loss = not minimax_or(opponent)
+            self.board[location] = EMPTY
+            if is_loss:
+                return False
+        return True
+'''
 class terminate_node:
     def __init__(self, value):
         self.value = value
@@ -91,7 +152,7 @@ class or_node:
         if self.left != None:
             board[point]
             return self.value and self.left.check_node()
-
+'''
 
 class GoBoard(object):
     def __init__(self, size):
@@ -101,6 +162,7 @@ class GoBoard(object):
         assert 2 <= size <= MAXSIZE
         self.reset(size)
         self.calculate_rows_cols_diags()
+        self.tested_stone_list = []
 
     def calculate_rows_cols_diags(self):
         if self.size < 5:
@@ -665,7 +727,7 @@ class GoBoard(object):
         legal_move = ' '.join([move for move in legal_move])
         return legal_move
 
-        def detect_potential_win(self, point):
+    def detect_potential_win(self, point):
             #stone number in the row, stone location
             best_move = {'1':[], '2':[], '3':[], '4':[]}
             
@@ -699,3 +761,19 @@ class GoBoard(object):
                 else:
                     best_move[str(right_diag_result)].append(point)
             return best_move
+        
+    def using_tree_detection(self, color):
+            # If the current player excutes this function, the program will try to place a stone in the opponent's neighbor.
+            # The function will try to find if there is a way to stop the opponent from winning.
+            
+            opponent = WHITE + BLACK - color
+            opponent_stone_list = [point for point in where1d(self.board == opponent)] 
+            for opponent_stone in opponent_stone_list:
+                for neighbor in self.get_neighbors(opponent_stone):
+                    if self.board[neighbor] == EMPTY:
+                        self.tested_stone_list.append(neighbor)
+                        self.board[neighbor] = color
+    
+    def solve_current_state(self, color):
+        tree = and_or_tree(self.board)
+        tree.minimax_or(color)
