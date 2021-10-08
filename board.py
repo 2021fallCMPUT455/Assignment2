@@ -804,6 +804,8 @@ class GoBoard(object):
             return location
         elif location == 0:
             # This is a draw or the program reachs the time limit.
+            for key in tree.best_move_for_now.keys():
+                pass
             return tree.best_move_for_now
         elif location < 0:
             # There is no wining move for player right now.
