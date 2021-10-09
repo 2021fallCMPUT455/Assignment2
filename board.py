@@ -568,9 +568,9 @@ class GoBoard(object):
         if x_counter >= 5:
             #print('hor')
             print(str(color))
-            return -1
+            return True
         else:
-            return x_counter
+            return found_straight_line
 
     def detect_straight_line_hor(self, point, color):
         found_straight_line = False
@@ -591,9 +591,9 @@ class GoBoard(object):
             y_counter += 1
         if y_counter >= 5:
             #print('ver')
-            return -1
+            return True
         else:
-            return y_counter
+            return found_straight_line
 
     def detect_straight_line_left_diag(self, point, color):
         #print(f'\n check 00: {self.board(self.size + 1, self.size + 1)} \n')
@@ -628,9 +628,10 @@ class GoBoard(object):
         #print('end')
         if counter >= 5:
             #print('right')
-            return -1
+            return True
         else:
-            return counter
+            return False
+
 
     def detect_straight_line_right_diag(self, point, color):
         y = point % self.NS
@@ -652,9 +653,9 @@ class GoBoard(object):
 
         if counter >= 5:
             #print('left')
-            return -1
+            return True
         else:
-            return counter
+            return False
 
     def working_on_detection(self, stone_list):
 
