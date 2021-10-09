@@ -895,41 +895,44 @@ class GoBoard(object):
         return -1
 
     def alphabeta(self, color, alpha, beta, current_depth):
-        if alpha == beta:
-            pass
+
+        opponent = WHITE + BLACK - color
+        color_point = [point for point in where1d(self.board == color)]
+        EMPTY_list = []
+        self.winning_move = None
+
+        if len(color_point) == 0:
+            EMPTY_list = where1d(self.board == EMPTY).reshape(1, -1)[0]
         else:
-            opponent = WHITE + BLACK - color
-            color_point = [point for point in where1d(self.board == color)]
-            EMPTY_list = []
-            if len(color_point) == 0:
-                EMPTY_list = where1d(self.board == EMPTY).reshape(1, -1)[0]
-            else:
-                for point in color_point:
-                    EMPTY_list = EMPTY_list + self.neighbors_of_color(
-                        point, EMPTY)
-            if self.detect_five_in_a_row() == color:
-                print('find a win in ' + str(current_depth))
-                return 1
-            if current_depth == self.depth or len(
-                    where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
-                return 0
-            print(where1d(self.board == EMPTY).reshape(1, -1)[0])
-            for location in EMPTY_list:
-                self.board[location] = color
-                print(current_depth)
+            for point in color_point:
+                EMPTY_list = EMPTY_list + self.neighbors_of_color(point, EMPTY)
+        if self.detect_five_in_a_row() == color:
+
+            return 1
+
+        if current_depth == self.depth or len(
+                where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
+            return 0
+        print(where1d(self.board == EMPTY).reshape(1, -1)[0])
+        for location in EMPTY_list:
+            self.board[location] = color
+            print('current_depth: ' + str(current_depth))
+            if alpha != beta:
                 value = -self.alphabeta(opponent, -beta, -alpha,
                                         current_depth + 1)
+                if value == 1:
+                    self.winning_move = location
                 if value > alpha:
                     alpha = value
-                self.board[location] = EMPTY
-                if value >= beta:
-                    return beta  # or value in failsoft (later)
+            self.board[location] = EMPTY
+            if value >= beta:
+                return beta
 
-            return alpha
+        return alpha
 
-    def build_tree(self):
+    def build_tree(self, current_player_color):
         self.depth = 5
-        current_depth = 0
+        current_depth = 1
         self.best_move_for_now = {}
         for i in range(self.depth):
             self.best_move_for_now[i + 1] = []
@@ -943,7 +946,7 @@ class GoBoard(object):
 
         if location > 0:
             # The location is a winning move
-            print('wining')
+            print('The wining move is ' + (self.winning_move))
             return location
         elif location == 0:
             # This is a draw or the program reachs the time limit.
