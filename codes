@@ -1,0 +1,95 @@
+gtp_connection
+
+self.timelimit = 1
+
+self.argmap = {
+            "boardsize": (1, 'Usage: boardsize INT'),
+            "komi": (1, 'Usage: komi FLOAT'),
+            "known_command": (1, 'Usage: known_command CMD_NAME'),
+            "genmove": (1, 'Usage: genmove {w,b}'),
+            "timelimit":(1, 'Usage: timelimit INT'),
+            "play": (2, 'Usage: play {b,w} MOVE'),
+            "legal_moves": (1, 'Usage: legal_moves {w,b}')
+        }
+self.commands = {
+            "protocol_version": self.protocol_version_cmd,
+            "quit": self.quit_cmd,
+            "name": self.name_cmd,
+            "boardsize": self.boardsize_cmd,
+            "showboard": self.showboard_cmd,
+            "clear_board": self.clear_board_cmd,
+            "komi": self.komi_cmd,
+            "version": self.version_cmd,
+            "known_command": self.known_command_cmd,
+            "list_commands": self.list_commands_cmd,
+            "play": self.play_cmd,
+            "legal_moves": self.legal_moves_cmd,
+            "gogui-rules_game_id": self.gogui_rules_game_id_cmd,
+            "gogui-rules_board_size": self.gogui_rules_board_size_cmd,
+            "gogui-rules_legal_moves": self.gogui_rules_legal_moves_cmd,
+            "gogui-rules_side_to_move": self.gogui_rules_side_to_move_cmd,
+            "gogui-rules_board": self.gogui_rules_board_cmd,
+            "gogui-rules_final_result": self.gogui_rules_final_result_cmd,
+            "gogui-analyze_commands": self.gogui_analyze_cmd,
+            "genmove":self.genmove_cmd,
+            "timelimit": self.timelimit_cmd
+            "solve": self.solve_cmd,
+        }
+        
+        
+     ### finished timelimit_cmd##
+     
+     
+    def timelimit_cmd(self, args):
+        seconds = None
+        try:
+            seconds = int(args[0])
+        except ValueError:
+            # cant int
+            self.respond("Error: Not Valid, must be an interger in range of [1,100]")
+            return
+        if (seconds <= 100 and seconds >= 1):
+            self.timelimit = seconds
+            self.respond()
+        else:
+            self.respond("Error: Not Valid, must be an interger in range of [1,100]")
+            
+            
+            
+            
+            
+          ## unfinished genmove_cmd##
+          
+    def genmove_cmd(self, args):
+        """
+        Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
+        """
+        board_colour = args[0].lower()
+        color = color_to_int(board_color)
+
+        moves = GoBoardUtil.generate_legal_moves(self.board, color)
+
+       #not over
+        if len(moves) > 0:
+            answer = self.solve_cmd()
+            if answer != "b" and answer != "w" and answer != "unknown":
+                move = answer[1]
+                move = move_to_coord
+
+                if self.board.is_legal(move,color):
+                    self.board.play_move(move,color)
+                    self.respond(move)
+                else:
+                    self.respond("resign")
+            else:
+                move = self.go_engine.get_move(self.board,color)
+                move_coord = point_to_coord(move,self.board.size)
+                move_as_string = format_point(move_coord)
+                if self.board.is_legal(move,color):
+                    self.board.play_move(move,color)
+                    self.respond(move_as_string.lower())
+                else:
+                    self.respond("resign")
+        else:
+            self.respond("resign")
+
