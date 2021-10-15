@@ -737,98 +737,16 @@ class GoBoard(object):
                 if is_win == 1:
                     return 1
         return -1
-
-    def alphabeta(self, color, alpha, beta, current_depth):
-        play_dict, opponent_dict = mapping_all_heuristic
-        if len(list(play_dict.keys())) == 0:
-            player_list = [point for point in where1d(self.board == EMPTY)]
+    def merge(lst1, lst2):
+        if not lst1:
+            return lst2[::-1]
+        if not lst2:
+            return lst1[::-1]
+        if lst1[-1] < lst2[-1]:
+            return [lst2[-1]] + merge(lst1, lst2[:-1])
         else:
-            player_best_move = max(player_dict, key=lambda k : player_dict[k])
-        if len(list(opponent_dict.keys())) == 0:
-            opponent_list = [point for point in where1d(self.board == EMPTY)]
-        else:
-            opponent_best_move = max(opponent_dict, key=lambda k : opponent_dict[k])
-        color_point = []
-        find_small_list = lambda a, b: min(a, b)
-        for i in range(find_small_list):
-            if player_list[]
-        opponent = WHITE + BLACK - color
-        color_point = [point for point in where1d(self.board == color)]
-        EMPTY_list = []
-        self.winning_move = None
-        
-        if len(color_point) == 0:
-            EMPTY_list = where1d(self.board == EMPTY).reshape(1, -1)[0]
-        else:
-            for point in color_point:
-                EMPTY_list = EMPTY_list + self.neighbors_of_color(point, EMPTY)
-        
-        if self.detect_five_in_a_row() == color:
-            self.winner = color
-            return 1
-
-        if current_depth == self.depth or len(
-                where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
-            return 0
-        print(where1d(self.board == EMPTY).reshape(1, -1)[0])
-        for location in EMPTY_list:
-            self.board[location] = color
-            print('current_depth: ' + str(current_depth))
-            if alpha != beta:
-                value = -self.alphabeta(opponent, -beta, -alpha,
-                                        current_depth + 1)
-                print('right now: ' + str(color) + ' ' + str(location))
-                if value == 1:
-                    self.winning_move = location
-                    print('winning move for color ' + str(color) + ': ' + str(self.winning_move))
-                    
-                if value > alpha:
-                    alpha = value
-            self.board[location] = EMPTY
-            if value >= beta:
-                return beta
-
-        return alpha
-
-    def decide_winner(self):
-        if self.winner == 1:
-            print('BLACK')
-        elif self.winner == 2:
-            print('WHITE')
-
-    def build_tree(self):
-        self.depth = 0
-        current_depth = 1
-        self.best_move_for_now = {}
-        for i in range(self.depth):
-            self.best_move_for_now[i + 1] = []
-
-        #location = self.minimax_or(WHITE, current_depth)
-        #location = self.negamax(WHITE, current_depth)
-        location = self.alphabeta(color=BLACK,
-                                  alpha=-1,
-                                  beta=1,
-                                  current_depth=0)
-        
-        if location > 0:
-            # The location is a winning move
-            self.decide_winner()
-            print('The wining move is ' + str(self.winning_move))
-            return location
-        elif location == 0:
-            # This is a draw or the program reachs the time limit.
-
-
-            print('The best move for now is: ' + str(self.mapping_all_heuristic(BLACK)))
-            print('draw')
-            
-            return self.best_move_for_now
-
-        elif location < 0:
-            # There is no wining move for player right now.
-            print('losing')
-            return 'lose'
-
+            return [lst1[-1]] + merge(lst1[:-1], lst2)
+    
     def heuristic_function(self):
         for point in stone_list:
             color = self.get_color(point)
@@ -1048,3 +966,130 @@ class GoBoard(object):
         '''
         
 
+    def alphabeta(self, color, alpha, beta, current_depth):
+        player_dict, opponent_dict = self.mapping_all_heuristic(color)
+        
+        '''
+        if len(list(play_dict.keys())) == 0:
+            player_list = [point for point in where1d(self.board == EMPTY)]
+        else:
+            player_best_move = max(player_dict, key=lambda k : player_dict[k])
+        if len(list(opponent_dict.keys())) == 0:
+            opponent_list = [point for point in where1d(self.board == EMPTY)]
+        else:
+            opponent_best_move = max(opponent_dict, key=lambda k : opponent_dict[k])
+        '''
+        color_point = []
+        player_count = len(list(player_dict.keys()))
+        opponent_count = len(list(opponent_dict.keys()))
+        
+        while player_count > 0 and opponent_count > 0:
+            player_key, player_value = max(player_dict.items(), key = lambda p: p[1])
+            opponent_key, opponent_value = max(opponent_dict.items(), key = lambda p: p[1])
+            if player_value >= opponent_value:
+                print('ccccccccc')
+                if player_key not in color_point:
+                    print('check')
+                    
+                    color_point.append(player_key)
+                    player_dict.pop(player_key, None)                   
+                    player_count -= 1
+                else:
+                    player_dict.pop(player_key, None)                   
+                    player_count -= 1
+            elif player_value < opponent_key:
+                print('aaaaaaaaaa')
+                if opponent_key not in color_point:
+                    print('checked')
+                    
+                    color_point.append(opponent_key)
+                    opponent_dict.pop(opponent_key, None)
+                    opponent_count -= 1
+                else:
+                    opponent_dict.pop(opponent_key, None)
+                    opponent_count -= 1
+            else:
+                break
+            
+            #player_count = len(list(player_dict.keys()))
+            #opponent_count = len(list(opponent_dict.keys()))
+            
+        
+        opponent = WHITE + BLACK - color
+        #color_point = [point for point in where1d(self.board == color)]
+        EMPTY_list = []
+        self.winning_move = None
+        '''
+        if len(color_point) == 0:
+            EMPTY_list = where1d(self.board == EMPTY).reshape(1, -1)[0]
+        else:
+            for point in color_point:
+                EMPTY_list = EMPTY_list + self.neighbors_of_color(point, EMPTY)
+        '''
+        if self.detect_five_in_a_row() == color:
+            self.winner = color
+            return 1
+       
+        if current_depth == self.depth or len(
+                where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
+            return 0
+        
+
+       
+        for location in color_point:
+            self.board[location] = color
+            print('current_depth: ' + str(current_depth))
+            if alpha != beta:
+                value = -self.alphabeta(opponent, -beta, -alpha,
+                                        current_depth + 1)
+                print('right now: ' + str(color) + ' ' + str(location))
+                if value == 1:
+                    self.winning_move = location
+                    print('winning move for color ' + str(color) + ': ' + str(self.winning_move))
+                    
+                if value > alpha:
+                    alpha = value
+            self.board[location] = EMPTY
+            if value >= beta:
+                return beta
+
+        return alpha
+
+    def decide_winner(self):
+        if self.winner == 1:
+            print('BLACK')
+        elif self.winner == 2:
+            print('WHITE')
+
+    def build_tree(self):
+        self.depth = 5
+        current_depth = 1
+        self.best_move_for_now = {}
+        for i in range(self.depth):
+            self.best_move_for_now[i + 1] = []
+
+        #location = self.minimax_or(WHITE, current_depth)
+        #location = self.negamax(WHITE, current_depth)
+        location = self.alphabeta(color=BLACK,
+                                  alpha=-1,
+                                  beta=1,
+                                  current_depth=0)
+        
+        if location > 0:
+            # The location is a winning move
+            self.decide_winner()
+            print('The wining move is ' + str(self.winning_move))
+            return location
+        elif location == 0:
+            # This is a draw or the program reachs the time limit.
+
+
+            print('The best move for now is: ' + str(self.mapping_all_heuristic(BLACK)))
+            print('draw')
+            
+            return self.best_move_for_now
+
+        elif location < 0:
+            # There is no wining move for player right now.
+            print('losing')
+            return 'lose'
