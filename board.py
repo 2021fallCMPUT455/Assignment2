@@ -739,17 +739,30 @@ class GoBoard(object):
         return -1
 
     def alphabeta(self, color, alpha, beta, current_depth):
-
+        play_dict, opponent_dict = mapping_all_heuristic
+        if len(list(play_dict.keys())) == 0:
+            player_list = [point for point in where1d(self.board == EMPTY)]
+        else:
+            player_best_move = max(player_dict, key=lambda k : player_dict[k])
+        if len(list(opponent_dict.keys())) == 0:
+            opponent_list = [point for point in where1d(self.board == EMPTY)]
+        else:
+            opponent_best_move = max(opponent_dict, key=lambda k : opponent_dict[k])
+        color_point = []
+        find_small_list = lambda a, b: min(a, b)
+        for i in range(find_small_list):
+            if player_list[]
         opponent = WHITE + BLACK - color
         color_point = [point for point in where1d(self.board == color)]
         EMPTY_list = []
         self.winning_move = None
-
+        
         if len(color_point) == 0:
             EMPTY_list = where1d(self.board == EMPTY).reshape(1, -1)[0]
         else:
             for point in color_point:
                 EMPTY_list = EMPTY_list + self.neighbors_of_color(point, EMPTY)
+        
         if self.detect_five_in_a_row() == color:
             self.winner = color
             return 1
@@ -764,8 +777,11 @@ class GoBoard(object):
             if alpha != beta:
                 value = -self.alphabeta(opponent, -beta, -alpha,
                                         current_depth + 1)
+                print('right now: ' + str(color) + ' ' + str(location))
                 if value == 1:
                     self.winning_move = location
+                    print('winning move for color ' + str(color) + ': ' + str(self.winning_move))
+                    
                 if value > alpha:
                     alpha = value
             self.board[location] = EMPTY
@@ -781,7 +797,7 @@ class GoBoard(object):
             print('WHITE')
 
     def build_tree(self):
-        self.depth = 5
+        self.depth = 0
         current_depth = 1
         self.best_move_for_now = {}
         for i in range(self.depth):
@@ -793,7 +809,7 @@ class GoBoard(object):
                                   alpha=-1,
                                   beta=1,
                                   current_depth=0)
-        print(type(self.board))
+        
         if location > 0:
             # The location is a winning move
             self.decide_winner()
@@ -949,7 +965,7 @@ class GoBoard(object):
             else:
                 break
             counter += 1
-            counter += 1
+            
 
         for x_marker, y_marker in zip(range(x + 1, self.NS),
                                       range(y - 1, 0, -1)):
@@ -1015,11 +1031,20 @@ class GoBoard(object):
 
         player_dict = self.mapping_player_heuristic(color)
         opponent_dict = self.mapping_player_heuristic(opponent)
-        player_best_move = max(k for k, v in player_dict.items())
-        opponent_best_move = max(k for k, v in opponent_dict.items())
+        #player_best_move = max(player_dict, key=lambda k : player_dict[k])
+        #opponent_best_move = max(opponent_dict, key=lambda k : opponent_dict[k])
+        
+        player_dict = dict(sorted(player_dict.items(), key=lambda item: item[1]))
+        opponent_dict = dict(sorted(opponent_dict.items(), key=lambda item: item[1]))
+            
+        
+
+        return player_dict, opponent_dict
+        '''
         if player_dict[player_best_move] < opponent_dict[opponent_best_move]:
             return opponent_best_move, opponent_dict[opponent_best_move]
         else:
             return player_best_move, player_dict[player_best_move]
+        '''
         
 
