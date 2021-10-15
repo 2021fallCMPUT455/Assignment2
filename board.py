@@ -915,7 +915,7 @@ class GoBoard(object):
             player_stone_list = [point for point in where1d(self.board == EMPTY)]
 
         potential_move_dict = {}
-        print(player_stone_list)
+        
         for point in player_stone_list:
             potential_moves = []
 
@@ -940,7 +940,7 @@ class GoBoard(object):
                     if value_pair[1] > potential_move_dict[value_pair[0]]:
                         potential_move_dict[value_pair[0]] = value_pair[1]
 
-        print(potential_move_dict)
+        
         #return max(potential_move_dict.items(), key=lambda k : k[1])
         return potential_move_dict
 
@@ -987,9 +987,9 @@ class GoBoard(object):
             player_key, player_value = max(player_dict.items(), key = lambda p: p[1])
             opponent_key, opponent_value = max(opponent_dict.items(), key = lambda p: p[1])
             if player_value >= opponent_value:
-                print('ccccccccc')
+                
                 if player_key not in color_point:
-                    print('check')
+                    
                     
                     color_point.append(player_key)
                     player_dict.pop(player_key, None)                   
@@ -998,9 +998,9 @@ class GoBoard(object):
                     player_dict.pop(player_key, None)                   
                     player_count -= 1
             elif player_value < opponent_key:
-                print('aaaaaaaaaa')
+                
                 if opponent_key not in color_point:
-                    print('checked')
+                    
                     
                     color_point.append(opponent_key)
                     opponent_dict.pop(opponent_key, None)
@@ -1013,7 +1013,7 @@ class GoBoard(object):
             
             #player_count = len(list(player_dict.keys()))
             #opponent_count = len(list(opponent_dict.keys()))
-            
+        print(str(color) + ': ' + str(color_point))    
         
         opponent = WHITE + BLACK - color
         #color_point = [point for point in where1d(self.board == color)]
@@ -1029,26 +1029,30 @@ class GoBoard(object):
         if self.detect_five_in_a_row() == color:
             self.winner = color
             return 1
-       
+        elif self.detect_five_in_a_row() == opponent:
+            self.winner = opponent
+            return -1
         if current_depth == self.depth or len(
                 where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
             return 0
         
-
-       
         for location in color_point:
             self.board[location] = color
-            print('current_depth: ' + str(current_depth))
-            if alpha != beta:
-                value = -self.alphabeta(opponent, -beta, -alpha,
+            self.checked_move.append((color, location))
+            
+            #if alpha != beta:
+            
+            print(str(color) + ': ' + str(location))
+            value = -self.alphabeta(opponent, -beta, -alpha,
                                         current_depth + 1)
-                print('right now: ' + str(color) + ' ' + str(location))
-                if value == 1:
-                    self.winning_move = location
-                    print('winning move for color ' + str(color) + ': ' + str(self.winning_move))
+                
+            if value == 1:
+                self.winning_move = location
                     
-                if value > alpha:
-                    alpha = value
+                    
+            if value > alpha:
+                alpha = value
+            ##################
             self.board[location] = EMPTY
             if value >= beta:
                 return beta
@@ -1062,6 +1066,7 @@ class GoBoard(object):
             print('WHITE')
 
     def build_tree(self):
+        self.checked_move = []
         self.depth = 5
         current_depth = 1
         self.best_move_for_now = {}
@@ -1074,7 +1079,7 @@ class GoBoard(object):
                                   alpha=-1,
                                   beta=1,
                                   current_depth=0)
-        
+        print(self.checked_move)
         if location > 0:
             # The location is a winning move
             self.decide_winner()
