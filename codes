@@ -1,5 +1,22 @@
 gtp_connection
 
+
+#########codes used to put inside the solve function to handle the timelimit 
+def handler(signum, frame):
+    raise TimeException
+
+signal.signal(signal.SIGALRM, handler)
+self.timelimit = 1
+def solve(self.args):
+signal.alarm(self.time_limit)
+try : ....
+except: result = 'unknow'
+signal.alarm(0)
+return result
+################
+
+
+
 self.timelimit = 1
 
 self.argmap = {
