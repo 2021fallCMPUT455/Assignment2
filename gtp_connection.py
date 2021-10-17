@@ -267,13 +267,12 @@ class GtpConnection:
         board_color = args[0].lower()
         color = color_to_int(board_color)
         answer = self.solve_cmd(args)
-
+        # answer from build tree can either be 1, 2, draw, unknown
         ### if time limit is reached or when toPlay is losing
-        if answer == 'lose' or answer == "unknown":
+        if( answer != color or answer == "unknown" ):
             move = self.go_engine.get_move(self.board, color)
             move_coord = point_to_coord(move, self.board.size)
             move_as_string = format_point(move_coord)
-
             if self.board.is_legal(move, color):
                 self.board.play_move(move, color)
                 print('playing random move')
@@ -282,6 +281,7 @@ class GtpConnection:
                 self.respond("Illegal move: {}".format(move_as_string))
         ### when a winning move or win is returned 
         else:
+            ### play best possible move
             self.respond(answer.lower())
 
     def gogui_rules_game_id_cmd(self, args):
@@ -373,10 +373,25 @@ class GtpConnection:
         try:
             answer = self.board.build_tree()
             signal.alarm(0)
-            self.respond(answer)
+            # answer from build tree can either be 1, 2, draw, unknown
+            color = ""
+            if(answer == 1):
+                color = 'b'
+                self.respond("winner " + color)
+                if( answer == self.board.current_player ):
+                    print('best move here')
+            elif(answer == 2):
+                color = 'w'
+                self.respond("winner " + color)
+                if( answer == self.board.current_player ):
+                    print('best move here')
+            else:
+                self.respond("winner " + answer)
+                if( answer == 'draw'):
+                    print('best move here')
             return answer
         except Exception:
-            self.respond('unknown')
+            self.respond('winner unknown')
             return('unknown')
 
 
