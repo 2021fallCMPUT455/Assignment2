@@ -1,11 +1,9 @@
 """
 board.py
-
 Implements a basic Go board with functions to:
 - initialize to a given board size
 - check if a move is legal
 - play a move
-
 The board uses a 1-dimensional representation with padding
 """
 
@@ -19,13 +17,9 @@ The GoBoard class implements a board and basic functions to play
 moves, check the end of the game, and count the acore at the end.
 The class also contains basic utility functions for writing a Go player.
 For many more utility functions, see the GoBoardUtil class in board_util.py.
-
 The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
-
-
-
 
 
 class GoBoard(object):
@@ -737,6 +731,7 @@ class GoBoard(object):
                 if is_win == 1:
                     return 1
         return -1
+
     def merge(lst1, lst2):
         if not lst1:
             return lst2[::-1]
@@ -746,7 +741,7 @@ class GoBoard(object):
             return [lst2[-1]] + merge(lst1, lst2[:-1])
         else:
             return [lst1[-1]] + merge(lst1[:-1], lst2)
-    
+
     def heuristic_function(self):
         for point in stone_list:
             color = self.get_color(point)
@@ -798,9 +793,9 @@ class GoBoard(object):
             else:
                 break
             y_counter += 1
-        
+
         return left_neighbor, right_neighbor, y_counter
-        
+
     def analyze_ver(self, point, color):
         y = point % self.NS
         x = point // self.NS
@@ -829,18 +824,17 @@ class GoBoard(object):
             else:
                 break
             x_counter += 1
-        
+
         return left_neighbor, right_neighbor, x_counter
 
     def analyze_left_diag(self, point, color):
         y = point % self.NS
         x = point // self.NS
 
-        
         counter = 0
         right_neighbor = -1
         left_neighbor = -1
-        
+
         for x_marker, y_marker in zip(range(x, self.NS), range(y, self.NS)):
             color_stone_line = self.get_color(self.pt(x_marker, y_marker))
             if color_stone_line == color:
@@ -851,8 +845,9 @@ class GoBoard(object):
             else:
                 break
             counter += 1
-            
-        for x_marker, y_marker in zip(range(x - 1, 0, -1), range(y - 1, 0, -1)):
+
+        for x_marker, y_marker in zip(range(x - 1, 0, -1), range(y - 1, 0,
+                                                                 -1)):
             color_stone_line = self.get_color(self.pt(x_marker, y_marker))
             if color_stone_line == color:
                 pass
@@ -862,8 +857,7 @@ class GoBoard(object):
             else:
                 break
             counter += 1
-                 
-        
+
         return left_neighbor, right_neighbor, counter
 
     def analyze_right_diag(self, point, color):
@@ -883,7 +877,6 @@ class GoBoard(object):
             else:
                 break
             counter += 1
-            
 
         for x_marker, y_marker in zip(range(x + 1, self.NS),
                                       range(y - 1, 0, -1)):
@@ -897,8 +890,7 @@ class GoBoard(object):
                 break
             counter += 1
 
-        
-        return left_neighbor, right_neighbor, counter 
+        return left_neighbor, right_neighbor, counter
 
     def check_heuristic_dict(self, point, counter, dictionary):
         if point != -1:
@@ -909,38 +901,44 @@ class GoBoard(object):
                     dictionary[point] = counter
 
     def mapping_player_heuristic(self, color):
-        
+
         player_stone_list = [point for point in where1d(self.board == color)]
         if len(player_stone_list) == 0:
-            player_stone_list = [point for point in where1d(self.board == EMPTY)]
+            player_stone_list = [
+                point for point in where1d(self.board == EMPTY)
+            ]
 
         potential_move_dict = {}
-        
+
         for point in player_stone_list:
             potential_moves = []
 
-            left_neighbor, right_neighbor, counter = self.analyze_hor(point, color)
-            
+            left_neighbor, right_neighbor, counter = self.analyze_hor(
+                point, color)
+
             potential_moves.append([left_neighbor, counter])
             potential_moves.append([right_neighbor, counter])
-            left_neighbor, right_neighbor, counter = self.analyze_ver(point, color)
+            left_neighbor, right_neighbor, counter = self.analyze_ver(
+                point, color)
             potential_moves.append([left_neighbor, counter])
             potential_moves.append([right_neighbor, counter])
-            left_neighbor, right_neighbor, counter = self.analyze_left_diag(point, color)
+            left_neighbor, right_neighbor, counter = self.analyze_left_diag(
+                point, color)
             potential_moves.append([left_neighbor, counter])
             potential_moves.append([right_neighbor, counter])
-            left_neighbor, right_neighbor, counter = self.analyze_right_diag(point, color)
+            left_neighbor, right_neighbor, counter = self.analyze_right_diag(
+                point, color)
             potential_moves.append([left_neighbor, counter])
             potential_moves.append([right_neighbor, counter])
-            
+
             for value_pair in potential_moves:
-                if value_pair[0] not in potential_move_dict.keys() and value_pair[0] != -1:
+                if value_pair[0] not in potential_move_dict.keys(
+                ) and value_pair[0] != -1:
                     potential_move_dict[value_pair[0]] = value_pair[1]
                 elif value_pair[0] in potential_move_dict.keys():
                     if value_pair[1] > potential_move_dict[value_pair[0]]:
                         potential_move_dict[value_pair[0]] = value_pair[1]
 
-        
         #return max(potential_move_dict.items(), key=lambda k : k[1])
         return potential_move_dict
 
@@ -951,11 +949,11 @@ class GoBoard(object):
         opponent_dict = self.mapping_player_heuristic(opponent)
         #player_best_move = max(player_dict, key=lambda k : player_dict[k])
         #opponent_best_move = max(opponent_dict, key=lambda k : opponent_dict[k])
-        
-        player_dict = dict(sorted(player_dict.items(), key=lambda item: item[1]))
-        opponent_dict = dict(sorted(opponent_dict.items(), key=lambda item: item[1]))
-            
-        
+
+        player_dict = dict(
+            sorted(player_dict.items(), key=lambda item: item[1]))
+        opponent_dict = dict(
+            sorted(opponent_dict.items(), key=lambda item: item[1]))
 
         return player_dict, opponent_dict
         '''
@@ -964,11 +962,9 @@ class GoBoard(object):
         else:
             return player_best_move, player_dict[player_best_move]
         '''
-        
 
     def alphabeta(self, color, alpha, beta, current_depth):
         player_dict, opponent_dict = self.mapping_all_heuristic(color)
-        
         '''
         if len(list(play_dict.keys())) == 0:
             player_list = [point for point in where1d(self.board == EMPTY)]
@@ -982,26 +978,26 @@ class GoBoard(object):
         color_point = []
         player_count = len(list(player_dict.keys()))
         opponent_count = len(list(opponent_dict.keys()))
-        
+
         while player_count > 0 and opponent_count > 0:
-            player_key, player_value = max(player_dict.items(), key = lambda p: p[1])
-            opponent_key, opponent_value = max(opponent_dict.items(), key = lambda p: p[1])
+            player_key, player_value = max(player_dict.items(),
+                                           key=lambda p: p[1])
+            opponent_key, opponent_value = max(opponent_dict.items(),
+                                               key=lambda p: p[1])
             if player_value >= opponent_value:
-                
+
                 if player_key not in color_point:
-                    
-                    
+
                     color_point.append(player_key)
-                    player_dict.pop(player_key, None)                   
+                    player_dict.pop(player_key, None)
                     player_count -= 1
                 else:
-                    player_dict.pop(player_key, None)                   
+                    player_dict.pop(player_key, None)
                     player_count -= 1
             elif player_value < opponent_key:
-                
+
                 if opponent_key not in color_point:
-                    
-                    
+
                     color_point.append(opponent_key)
                     opponent_dict.pop(opponent_key, None)
                     opponent_count -= 1
@@ -1010,11 +1006,11 @@ class GoBoard(object):
                     opponent_count -= 1
             else:
                 break
-            
+
             #player_count = len(list(player_dict.keys()))
             #opponent_count = len(list(opponent_dict.keys()))
-        print(str(color) + ': ' + str(color_point))    
-        
+        print(str(color) + ': ' + str(color_point))
+
         opponent = WHITE + BLACK - color
         #color_point = [point for point in where1d(self.board == color)]
         EMPTY_list = []
@@ -1035,21 +1031,19 @@ class GoBoard(object):
         if current_depth == self.depth or len(
                 where1d(self.board == EMPTY).reshape(1, -1)[0]) == 0:
             return 0
-        
+
         for location in color_point:
             self.board[location] = color
             self.checked_move.append((color, location))
-            
+
             #if alpha != beta:
-            
+
             print(str(color) + ': ' + str(location))
-            value = -self.alphabeta(opponent, -beta, -alpha,
-                                        current_depth + 1)
-                
+            value = -self.alphabeta(opponent, -beta, -alpha, current_depth + 1)
+
             if value == 1:
                 self.winning_move = location
-                    
-                    
+
             if value > alpha:
                 alpha = value
             ##################
@@ -1062,8 +1056,14 @@ class GoBoard(object):
     def decide_winner(self):
         if self.winner == 1:
             print('BLACK')
-        elif self.winner == 2:
+        elif self.winner == -1:
             print('WHITE')
+
+    def select_best_move(self, player_dictionary):
+        if len(list(player_dictionary.keys())) != 0:
+            player_key, player_value = max(player_dict.items(),
+                                           key=lambda p: p[1])
+            return player_key
 
     def build_tree(self):
         self.checked_move = []
@@ -1075,11 +1075,12 @@ class GoBoard(object):
 
         #location = self.minimax_or(WHITE, current_depth)
         #location = self.negamax(WHITE, current_depth)
-        location = self.alphabeta(color=BLACK,
+        location = self.alphabeta(color=self.current_player,
                                   alpha=-1,
                                   beta=1,
                                   current_depth=0)
-        print(self.checked_move)
+        print(location)
+        # print(self.checked_move)
         if location > 0:
             # The location is a winning move
             self.decide_winner()
@@ -1088,11 +1089,13 @@ class GoBoard(object):
         elif location == 0:
             # This is a draw or the program reachs the time limit.
 
-
-            print('The best move for now is: ' + str(self.mapping_all_heuristic(BLACK)))
+            print('The best move ofr now is: ' + str(
+                self.select_best_move(
+                    self.mapping_all_heuristic(self.current_player))))
             print('draw')
-            
-            return self.best_move_for_now
+
+            # return self.best_move_for_now
+            return 'draw'
 
         elif location < 0:
             # There is no wining move for player right now.

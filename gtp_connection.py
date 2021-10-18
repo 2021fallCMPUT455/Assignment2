@@ -1,12 +1,11 @@
 """
 gtp_connection.py
 Module for playing games of Go using GoTextProtocol
-
 Parts of this code were originally based on the gtp module 
 in the Deep-Go project by Isaac Henrion and Amos Storkey 
 at the University of Edinburgh.
 """
-import traceback
+import traceback, signal, time
 from sys import stdin, stdout, stderr
 from board_util import (
     GoBoardUtil,
@@ -26,7 +25,6 @@ class GtpConnection:
     def __init__(self, go_engine, board, debug_mode=False):
         """
         Manage a GTP connection for a Go-playing engine
-
         Parameters
         ----------
         go_engine:
@@ -37,6 +35,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+        self.timelimit = 1
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -47,7 +46,6 @@ class GtpConnection:
             "komi": self.komi_cmd,
             "version": self.version_cmd,
             "known_command": self.known_command_cmd,
-            "genmove": self.genmove_cmd,
             "list_commands": self.list_commands_cmd,
             "play": self.play_cmd,
             "legal_moves": self.legal_moves_cmd,
@@ -58,19 +56,22 @@ class GtpConnection:
             "gogui-rules_board": self.gogui_rules_board_cmd,
             "gogui-rules_final_result": self.gogui_rules_final_result_cmd,
             "gogui-analyze_commands": self.gogui_analyze_cmd,
-            "solve": self.solve
+            "genmove":self.genmove_cmd,
+            "timelimit": self.timelimit_cmd,
+            "solve": self.solve_cmd,
         }
 
         # used for argument checking
         # values: (required number of arguments,
         #          error message on argnum failure)
         self.argmap = {
-            "boardsize": (1, "Usage: boardsize INT"),
-            "komi": (1, "Usage: komi FLOAT"),
-            "known_command": (1, "Usage: known_command CMD_NAME"),
-            "genmove": (1, "Usage: genmove {w,b}"),
-            "play": (2, "Usage: play {b,w} MOVE"),
-            "legal_moves": (1, "Usage: legal_moves {w,b}"),
+            "boardsize": (1, 'Usage: boardsize INT'),
+            "komi": (1, 'Usage: komi FLOAT'),
+            "known_command": (1, 'Usage: known_command CMD_NAME'),
+            "genmove": (1, 'Usage: genmove {w,b}'),
+            "timelimit":(1, 'Usage: timelimit INT'),
+            "play": (2, 'Usage: play {b,w} MOVE'),
+            "legal_moves": (1, 'Usage: legal_moves {w,b}')
         }
 
     def write(self, data):
@@ -265,14 +266,23 @@ class GtpConnection:
             return
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
-            self.board.play_move(move, color)
-            self.respond(move_as_string.lower())
+        answer = self.solve_cmd(args)
+        # answer from build tree can either be 1, 2, draw, unknown
+        ### if time limit is reached or when toPlay is losing
+        if( answer != color or answer == "unknown" ):
+            move = self.go_engine.get_move(self.board, color)
+            move_coord = point_to_coord(move, self.board.size)
+            move_as_string = format_point(move_coord)
+            if self.board.is_legal(move, color):
+                self.board.play_move(move, color)
+                print('playing random move')
+                self.respond(move_as_string.lower())
+            else:
+                self.respond("Illegal move: {}".format(move_as_string))
+        ### when a winning move or win is returned 
         else:
-            self.respond("Illegal move: {}".format(move_as_string))
+            ### play best possible move
+            self.respond(answer.lower())
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
@@ -339,9 +349,50 @@ class GtpConnection:
                      "pstring/Rules GameID/gogui-rules_game_id\n"
                      "pstring/Show Board/gogui-rules_board\n")
 
-    def solve(self, args):
-        print(self.board.build_tree())
-        #solve_current_state(WHITE)
+    def timelimit_cmd(self, args):
+        seconds = None
+        try:
+            seconds = int(args[0])
+        except ValueError:
+            # cant int
+            self.respond("Error: Not Valid, must be an interger in range of [1,100]")
+            return
+        if (seconds <= 100 and seconds >= 1):
+            self.timelimit = seconds
+            self.respond()
+        else:
+            self.respond("Error: Not Valid, must be an interger in range of [1,100]")
+
+    def handler(signum, frame):
+        raise Exception("end of time")
+
+    signal.signal(signal.SIGALRM, handler)
+
+    def solve_cmd(self, args):
+        signal.alarm(self.timelimit)
+        try:
+            answer = self.board.build_tree()
+            signal.alarm(0)
+            # answer from build tree can either be 1, 2, draw, unknown
+            color = ""
+            if(answer == 1):
+                color = 'b'
+                self.respond("winner " + color)
+                if( answer == self.board.current_player ):
+                    print('best move here')
+            elif(answer == 2):
+                color = 'w'
+                self.respond("winner " + color)
+                if( answer == self.board.current_player ):
+                    print('best move here')
+            else:
+                self.respond("winner " + answer)
+                if( answer == 'draw'):
+                    print('best move here')
+            return answer
+        except Exception:
+            self.respond('winner unknown')
+            return('unknown')
 
 
 def point_to_coord(point, boardsize):
